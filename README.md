@@ -1,4 +1,4 @@
-# 🚇 Optimal Route Finder — Hyderabad Metro
+# 🚇 Optimal Route Finder — Metro-Network-Analysis (Hyderabad Metro)
 
 A Dijkstra's-algorithm-based shortest path finder for the Hyderabad Metro network. Computes the minimum **distance** or **travel time** between any two stations across 56 stations on 3 interconnected lines, and reconstructs the full route.
 
