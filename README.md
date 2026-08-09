@@ -63,6 +63,9 @@ Route: Miyapur -> JNTU_College -> KPHP_Colony -> ... -> LB_Nagar
 
 > Station names are case-sensitive and use underscores — e.g. `LB_Nagar`, `Lakdi-Ka-Pul`, `HITEC_City`. Run option `1` if you're unsure of the exact spelling.
 
-## License
+---
 
-MIT
+<p align="center">
+  Made with ❤️ by <strong>Sai Kumar</strong><br>
+  DSA enthusiast · BTech IT student
+</p>
