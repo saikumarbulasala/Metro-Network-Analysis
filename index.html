@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimal Route Finder — Hyderabad Metro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121319;
+    --panel: #1B1D25;
+    --panel-2: #21232D;
+    --line: #2E3140;
+    --text: #ECEAE3;
+    --muted: #8B8D9B;
+    --red: #E4572E;
+    --blue: #3A7BFF;
+    --green: #2FAE66;
+    --amber: #F2B705;
+    --radius: 10px;
+  }
+  *{ box-sizing: border-box; }
+  html, body{
+    margin:0; padding:0; height:100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  header{
+    padding: 28px clamp(20px,4vw,56px) 18px;
+    border-bottom: 1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  header h1{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size: clamp(26px, 3.4vw, 38px);
+    letter-spacing: 0.3px;
+    margin:0;
+    text-transform: uppercase;
+  }
+  header h1 span{ color: var(--amber); }
+  header .sub{
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  main{
+    flex:1;
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+  }
+  @media (max-width: 820px){
+    main{ grid-template-columns: 1fr; }
+  }
+  .panel{
+    padding: clamp(20px,3vw,32px);
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+  }
+  @media (max-width: 820px){
+    .panel{ border-right:none; border-bottom:1px solid var(--line); }
+  }
+  .field{ margin-bottom: 20px; }
+  .field label{
+    display:block;
+    font-family:'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  select{
+    width:100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 11px 12px;
+    border-radius: var(--radius);
+    font-size: 14.5px;
+    font-family:'Inter', sans-serif;
+    appearance:none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238B8D9B' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;
+    background-position: right 12px center;
+  }
+  select:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+
+  .mode-toggle{
+    display:flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow:hidden;
+  }
+  .mode-toggle button{
+    flex:1;
+    background: var(--panel-2);
+    color: var(--muted);
+    border:none;
+    padding: 10px 8px;
+    font-family:'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor:pointer;
+    transition: background .15s, color .15s;
+  }
+  .mode-toggle button.active{
+    background: var(--amber);
+    color: #14151A;
+    font-weight:600;
+  }
+  .mode-toggle button:focus-visible{ outline:2px solid var(--amber); outline-offset:-3px; }
+
+  .swap-btn{
+    width:100%;
+    margin: 4px 0 20px;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--muted);
+    padding: 8px;
+    border-radius: var(--radius);
+    font-family:'Inter', sans-serif;
+    font-size: 12.5px;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .swap-btn:hover{ color: var(--text); border-color: var(--muted); }
+
+  .find-btn{
+    width:100%;
+    background: var(--amber);
+    color:#14151A;
+    border:none;
+    padding: 13px;
+    border-radius: var(--radius);
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor:pointer;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .find-btn:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(242,183,5,0.25); }
+  .find-btn:active{ transform: translateY(0); }
+  .find-btn:focus-visible{ outline:2px solid var(--text); outline-offset:2px; }
+
+  .legend{
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .legend .lg-title{
+    font-family:'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .lg-row{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .lg-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+  .content{
+    padding: clamp(20px,3vw,36px);
+    display:flex;
+    flex-direction:column;
+    gap: 24px;
+    min-width:0;
+  }
+
+  .readout{
+    display:flex;
+    align-items:flex-end;
+    gap: 28px;
+    flex-wrap:wrap;
+  }
+  .readout .big{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size: clamp(36px, 6vw, 56px);
+    line-height:1;
+    color: var(--amber);
+  }
+  .readout .unit{
+    font-family:'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    color: var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-left:6px;
+  }
+  .readout .hops{
+    font-family:'Inter', sans-serif;
+    color: var(--muted);
+    font-size: 13.5px;
+    padding-bottom:8px;
+  }
+
+  .map-frame{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: clamp(16px, 3vw, 32px);
+    overflow-x:auto;
+  }
+  .map-frame svg{ display:block; min-width: 600px; }
+
+  .station-label{
+    font-family:'Inter', sans-serif;
+    font-size: 11.5px;
+    fill: var(--muted);
+  }
+  .station-label.endpoint{ fill: var(--text); font-weight:600; }
+
+  .route-list{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px clamp(16px,3vw,28px);
+  }
+  .route-list .rl-title{
+    font-family:'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .route-chain{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap: 6px;
+    font-family:'Inter', sans-serif;
+    font-size: 14px;
+  }
+  .route-chain .stop{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    border-radius: 999px;
+    white-space:nowrap;
+  }
+  .route-chain .stop.endpoint{
+    border-color: var(--amber);
+    color: var(--amber);
+    font-weight:600;
+  }
+  .route-chain .arrow{ color: var(--muted); font-size: 13px; }
+
+  .empty-state{
+    color: var(--muted);
+    font-size: 14px;
+    padding: 40px 10px;
+    text-align:center;
+    font-family:'Inter', sans-serif;
+  }
+
+  .error-msg{
+    color: var(--red);
+    font-family:'Inter', sans-serif;
+    font-size: 13.5px;
+    margin-top: -8px;
+  }
+
+  footer{
+    padding: 14px clamp(20px,4vw,56px);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    font-family:'Inter', sans-serif;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .route-path{
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+      animation: draw 1.1s ease-out forwards;
+    }
+    @keyframes draw{ to{ stroke-dashoffset: 0; } }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Optimal Route <span>Finder</span></h1>
+  <div class="sub">Hyderabad Metro &middot; Dijkstra's shortest path across Red / Blue / Green lines</div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="field">
+      <label for="source">From</label>
+      <select id="source"></select>
+    </div>
+    <div class="field">
+      <label for="destination">To</label>
+      <select id="destination"></select>
+    </div>
+    <button class="swap-btn" id="swapBtn">⇅ Swap stations</button>
+
+    <div class="field">
+      <label>Optimize for</label>
+      <div class="mode-toggle">
+        <button id="modeDistance" class="active">Distance</button>
+        <button id="modeTime">Time</button>
+      </div>
+    </div>
+
+    <button class="find-btn" id="findBtn">Find Route</button>
+    <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+    <div class="legend">
+      <div class="lg-title">Metro lines</div>
+      <div class="lg-row"><span class="lg-dot" style="background:var(--red)"></span> Red line</div>
+      <div class="lg-row"><span class="lg-dot" style="background:var(--blue)"></span> Blue line</div>
+      <div class="lg-row"><span class="lg-dot" style="background:var(--green)"></span> Green line</div>
+      <div class="lg-row"><span class="lg-dot" style="background:var(--amber)"></span> Computed route</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="readout" class="readout" style="display:none;">
+      <div><span id="bigNumber" class="big">0</span><span id="bigUnit" class="unit">meters</span></div>
+      <div class="hops" id="hopsLabel"></div>
+    </div>
+
+    <div class="map-frame">
+      <div id="mapEmpty" class="empty-state">Pick a source and destination, then hit "Find Route" to see the schematic.</div>
+      <svg id="mapSvg" style="display:none;" viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="route-list" id="routeListWrap" style="display:none;">
+      <div class="rl-title">Full stop sequence</div>
+      <div class="route-chain" id="routeChain"></div>
+    </div>
+  </div>
+</main>
+
+<footer>56 stations &middot; 3 lines &middot; runs entirely in your browser — no backend required.</footer>
+
+<script>
+// ---- Graph data (mirrors metro.py / Main.java) ----
+const METRO_MAP = {
+  "Miyapur": [{n:"JNTU_College",t:3,d:1800}],
+  "JNTU_College": [{n:"Miyapur",t:3,d:1800}, {n:"KPHP_Colony",t:3,d:1400}],
+  "KPHP_Colony": [{n:"JNTU_College",t:3,d:1400}, {n:"Kukatpally",t:3,d:1500}],
+  "Kukatpally": [{n:"KPHP_Colony",t:3,d:1500}, {n:"Balanagar",t:2,d:1500}],
+  "Balanagar": [{n:"Kukatpally",t:2,d:1500}, {n:"Moosapet",t:2,d:600}],
+  "Moosapet": [{n:"Balanagar",t:2,d:600}, {n:"Bharat_Nagar",t:2,d:1000}],
+  "Bharat_Nagar": [{n:"Moosapet",t:2,d:1000}, {n:"Erragadda",t:2,d:900}],
+  "Erragadda": [{n:"Bharat_Nagar",t:2,d:900}, {n:"ESI_Hospital",t:2,d:200}],
+  "ESI_Hospital": [{n:"Erragadda",t:2,d:200}, {n:"SR_Nagar",t:2,d:1700}],
+  "SR_Nagar": [{n:"ESI_Hospital",t:2,d:1700}, {n:"Ameerpet",t:2,d:700}],
+  "Ameerpet": [{n:"SR_Nagar",t:2,d:700}, {n:"Begumpet",t:2,d:1600}, {n:"Madhura_Nagar",t:2,d:700}, {n:"Panjagutta",t:3,d:1300}],
+  "Panjagutta": [{n:"Ameerpet",t:3,d:1300}, {n:"Irrum_Manzil",t:2,d:1000}],
+  "Irrum_Manzil": [{n:"Panjagutta",t:2,d:1000}, {n:"Khairatabad",t:3,d:1200}],
+  "Khairatabad": [{n:"Irrum_Manzil",t:3,d:1200}, {n:"Lakdi-Ka-Pul",t:2,d:1200}],
+  "Lakdi-Ka-Pul": [{n:"Khairatabad",t:2,d:1200}, {n:"Assembly",t:2,d:1100}],
+  "Assembly": [{n:"Lakdi-Ka-Pul",t:2,d:1100}, {n:"Nampally",t:2,d:700}],
+  "Nampally": [{n:"Assembly",t:2,d:700}, {n:"Gandhi_Bhavan",t:2,d:800}],
+  "Gandhi_Bhavan": [{n:"Nampally",t:2,d:800}, {n:"Osmania_Medical_College",t:2,d:800}],
+  "Osmania_Medical_College": [{n:"Gandhi_Bhavan",t:2,d:800}, {n:"MG_Bus_Station",t:2,d:900}],
+  "MG_Bus_Station": [{n:"Osmania_Medical_College",t:2,d:900}, {n:"Sulthan_Bazaar",t:3,d:2100}, {n:"Malakpet",t:2,d:800}],
+  "Malakpet": [{n:"MG_Bus_Station",t:2,d:800}, {n:"New_Market",t:2,d:1200}],
+  "New_Market": [{n:"Malakpet",t:2,d:1200}, {n:"Musarambagh",t:2,d:1000}],
+  "Musarambagh": [{n:"New_Market",t:2,d:1000}, {n:"Dilsukhnagar",t:3,d:1500}],
+  "Dilsukhnagar": [{n:"Musarambagh",t:3,d:1500}, {n:"Chaitanyapuri",t:2,d:1100}],
+  "Chaitanyapuri": [{n:"Dilsukhnagar",t:2,d:1100}, {n:"Victoria_Memorial",t:2,d:1200}],
+  "Victoria_Memorial": [{n:"Chaitanyapuri",t:2,d:1200}, {n:"LB_Nagar",t:2,d:1400}],
+  "LB_Nagar": [{n:"Victoria_Memorial",t:2,d:1400}],
+  "Raidurg": [{n:"HITEC_City",t:2,d:1500}],
+  "HITEC_City": [{n:"Raidurg",t:2,d:1500}, {n:"Durgam_Cheruvu",t:2,d:900}],
+  "Durgam_Cheruvu": [{n:"HITEC_City",t:2,d:900}, {n:"Madhapur",t:3,d:1600}],
+  "Madhapur": [{n:"Durgam_Cheruvu",t:3,d:1600}, {n:"Peddamma_Gudi",t:2,d:1200}],
+  "Peddamma_Gudi": [{n:"Madhapur",t:2,d:1200}, {n:"Jubilee_Hills_Check_Post",t:2,d:700}],
+  "Jubilee_Hills_Check_Post": [{n:"Peddamma_Gudi",t:2,d:700}, {n:"Road_No_5_Jubilee_Hills",t:3,d:1400}],
+  "Road_No_5_Jubilee_Hills": [{n:"Jubilee_Hills_Check_Post",t:3,d:1400}, {n:"Yusufguda",t:2,d:900}],
+  "Yusufguda": [{n:"Road_No_5_Jubilee_Hills",t:2,d:900}, {n:"Madhura_Nagar",t:3,d:1500}],
+  "Madhura_Nagar": [{n:"Yusufguda",t:3,d:1500}, {n:"Ameerpet",t:2,d:700}],
+  "Begumpet": [{n:"Ameerpet",t:2,d:1600}, {n:"Prakash_Nagar",t:2,d:1400}],
+  "Prakash_Nagar": [{n:"Begumpet",t:2,d:1400}, {n:"Rasoolpura",t:2,d:1100}],
+  "Rasoolpura": [{n:"Prakash_Nagar",t:2,d:1100}, {n:"Paradise",t:2,d:1100}],
+  "Paradise": [{n:"Rasoolpura",t:2,d:1100}, {n:"Parade_Ground",t:2,d:1200}],
+  "Parade_Ground": [{n:"Paradise",t:2,d:1200}, {n:"Secundherabad_West",t:2,d:1000}, {n:"Secundherabad_East",t:3,d:1500}],
+  "Secundherabad_East": [{n:"Parade_Ground",t:3,d:1500}, {n:"Mettuguda",t:3,d:1900}],
+  "Mettuguda": [{n:"Secundherabad_East",t:3,d:1900}, {n:"Tarnaka",t:2,d:1300}],
+  "Tarnaka": [{n:"Mettuguda",t:2,d:1300}, {n:"Habsiguda",t:3,d:1600}],
+  "Habsiguda": [{n:"Tarnaka",t:3,d:1600}, {n:"NGRI",t:2,d:800}],
+  "NGRI": [{n:"Habsiguda",t:2,d:800}, {n:"Stadium",t:2,d:1200}],
+  "Stadium": [{n:"NGRI",t:2,d:1200}, {n:"Uppal",t:2,d:1100}],
+  "Uppal": [{n:"Stadium",t:2,d:1100}, {n:"Nagole",t:2,d:1000}],
+  "Nagole": [{n:"Uppal",t:2,d:1000}],
+  "Secundherabad_West": [{n:"Parade_Ground",t:2,d:1000}, {n:"Gandhi_Hospital",t:2,d:1000}],
+  "Gandhi_Hospital": [{n:"Secundherabad_West",t:2,d:1000}, {n:"Musheerabad",t:2,d:1500}],
+  "Musheerabad": [{n:"Gandhi_Hospital",t:2,d:1500}, {n:"RTC_X_Roads",t:2,d:1300}],
+  "RTC_X_Roads": [{n:"Musheerabad",t:2,d:1300}, {n:"Chikkadpally",t:3,d:1900}],
+  "Chikkadpally": [{n:"RTC_X_Roads",t:3,d:1900}, {n:"Narayanaguda",t:1,d:900}],
+  "Narayanaguda": [{n:"Chikkadpally",t:1,d:900}, {n:"Sulthan_Bazaar",t:2,d:1400}],
+  "Sulthan_Bazaar": [{n:"Narayanaguda",t:2,d:1400}, {n:"MG_Bus_Station",t:3,d:2100}],
+};
+
+const STATION_LINE = {
+  "Miyapur": "red",
+  "JNTU_College": "red",
+  "KPHP_Colony": "red",
+  "Kukatpally": "red",
+  "Balanagar": "red",
+  "Moosapet": "red",
+  "Bharat_Nagar": "red",
+  "Erragadda": "red",
+  "ESI_Hospital": "red",
+  "SR_Nagar": "red",
+  "Ameerpet": "red",
+  "Panjagutta": "red",
+  "Irrum_Manzil": "red",
+  "Khairatabad": "red",
+  "Lakdi-Ka-Pul": "red",
+  "Assembly": "red",
+  "Nampally": "red",
+  "Gandhi_Bhavan": "red",
+  "Osmania_Medical_College": "red",
+  "MG_Bus_Station": "red",
+  "Malakpet": "red",
+  "New_Market": "red",
+  "Musarambagh": "red",
+  "Dilsukhnagar": "red",
+  "Chaitanyapuri": "red",
+  "Victoria_Memorial": "red",
+  "LB_Nagar": "red",
+  "Raidurg": "blue",
+  "HITEC_City": "blue",
+  "Durgam_Cheruvu": "blue",
+  "Madhapur": "blue",
+  "Peddamma_Gudi": "blue",
+  "Jubilee_Hills_Check_Post": "blue",
+  "Road_No_5_Jubilee_Hills": "blue",
+  "Yusufguda": "blue",
+  "Madhura_Nagar": "blue",
+  "Begumpet": "blue",
+  "Prakash_Nagar": "blue",
+  "Rasoolpura": "blue",
+  "Paradise": "blue",
+  "Parade_Ground": "blue",
+  "Secundherabad_East": "blue",
+  "Mettuguda": "blue",
+  "Tarnaka": "blue",
+  "Habsiguda": "blue",
+  "NGRI": "blue",
+  "Stadium": "blue",
+  "Uppal": "blue",
+  "Nagole": "blue",
+  "Secundherabad_West": "green",
+  "Gandhi_Hospital": "green",
+  "Musheerabad": "green",
+  "RTC_X_Roads": "green",
+  "Chikkadpally": "green",
+  "Narayanaguda": "green",
+  "Sulthan_Bazaar": "green",
+};
+
+const STATION_ORDER = ["Miyapur", "JNTU_College", "KPHP_Colony", "Kukatpally", "Balanagar", "Moosapet", "Bharat_Nagar", "Erragadda", "ESI_Hospital", "SR_Nagar", "Ameerpet", "Panjagutta", "Irrum_Manzil", "Khairatabad", "Lakdi-Ka-Pul", "Assembly", "Nampally", "Gandhi_Bhavan", "Osmania_Medical_College", "MG_Bus_Station", "Malakpet", "New_Market", "Musarambagh", "Dilsukhnagar", "Chaitanyapuri", "Victoria_Memorial", "LB_Nagar", "Raidurg", "HITEC_City", "Durgam_Cheruvu", "Madhapur", "Peddamma_Gudi", "Jubilee_Hills_Check_Post", "Road_No_5_Jubilee_Hills", "Yusufguda", "Madhura_Nagar", "Begumpet", "Prakash_Nagar", "Rasoolpura", "Paradise", "Parade_Ground", "Secundherabad_East", "Mettuguda", "Tarnaka", "Habsiguda", "NGRI", "Stadium", "Uppal", "Nagole", "Secundherabad_West", "Gandhi_Hospital", "Musheerabad", "RTC_X_Roads", "Chikkadpally", "Narayanaguda", "Sulthan_Bazaar"];
+
+// ---- Dijkstra (generic over distance or time) ----
+function dijkstra(source, weightKey){
+  const dist = {}, parent = {};
+  for(const s of STATION_ORDER){ dist[s] = Infinity; parent[s] = null; }
+  dist[source] = 0;
+
+  // simple binary-heap-free priority queue via array (fine for 56 nodes)
+  const pq = [[0, source]];
+  const visited = new Set();
+
+  while(pq.length){
+    pq.sort((a,b) => a[0]-b[0]);
+    const [cost, current] = pq.shift();
+    if(visited.has(current)) continue;
+    visited.add(current);
+    if(cost > dist[current]) continue;
+
+    for(const edge of METRO_MAP[current]){
+      const w = weightKey === 'distance' ? edge.d : edge.t;
+      const newCost = cost + w;
+      if(newCost < dist[edge.n]){
+        dist[edge.n] = newCost;
+        parent[edge.n] = current;
+        pq.push([newCost, edge.n]);
+      }
+    }
+  }
+  return { dist, parent };
+}
+
+function buildRoute(source, destination, parent){
+  if(source === destination) return [source];
+  const route = [];
+  let at = destination;
+  while(at !== null){
+    route.push(at);
+    if(at === source) break;
+    at = parent[at];
+  }
+  if(!route.length || route[route.length-1] !== source) return null;
+  return route.reverse();
+}
+
+// ---- UI wiring ----
+const sourceSel = document.getElementById('source');
+const destSel = document.getElementById('destination');
+const findBtn = document.getElementById('findBtn');
+const swapBtn = document.getElementById('swapBtn');
+const modeDistanceBtn = document.getElementById('modeDistance');
+const modeTimeBtn = document.getElementById('modeTime');
+const errorMsg = document.getElementById('errorMsg');
+const readout = document.getElementById('readout');
+const bigNumber = document.getElementById('bigNumber');
+const bigUnit = document.getElementById('bigUnit');
+const hopsLabel = document.getElementById('hopsLabel');
+const mapEmpty = document.getElementById('mapEmpty');
+const mapSvg = document.getElementById('mapSvg');
+const routeListWrap = document.getElementById('routeListWrap');
+const routeChain = document.getElementById('routeChain');
+
+let mode = 'distance';
+
+function populateSelects(){
+  const sorted = [...STATION_ORDER].sort((a,b)=>a.localeCompare(b));
+  for(const sel of [sourceSel, destSel]){
+    sel.innerHTML = '';
+    for(const s of sorted){
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s.replace(/_/g, ' ');
+      sel.appendChild(opt);
+    }
+  }
+  sourceSel.value = 'Miyapur';
+  destSel.value = 'LB_Nagar';
+}
+populateSelects();
+
+modeDistanceBtn.addEventListener('click', () => {
+  mode = 'distance';
+  modeDistanceBtn.classList.add('active');
+  modeTimeBtn.classList.remove('active');
+});
+modeTimeBtn.addEventListener('click', () => {
+  mode = 'time';
+  modeTimeBtn.classList.add('active');
+  modeDistanceBtn.classList.remove('active');
+});
+
+swapBtn.addEventListener('click', () => {
+  const tmp = sourceSel.value;
+  sourceSel.value = destSel.value;
+  destSel.value = tmp;
+});
+
+const LINE_COLOR = { red: 'var(--red)', blue: 'var(--blue)', green: 'var(--green)' };
+
+function renderMap(route){
+  mapSvg.innerHTML = '';
+  const n = route.length;
+  const padX = 60, width = 900, height = 260;
+  const usableW = width - padX*2;
+  const y = height/2;
+
+  const xs = route.map((_, i) => n === 1 ? width/2 : padX + (usableW * i/(n-1)));
+
+  // connecting segments, colored by the destination station's line
+  for(let i=0;i<n-1;i++){
+    const lineColor = LINE_COLOR[STATION_LINE[route[i+1]]] || 'var(--amber)';
+    const seg = document.createElementNS('http://www.w3.org/2000/svg','line');
+    seg.setAttribute('x1', xs[i]); seg.setAttribute('y1', y);
+    seg.setAttribute('x2', xs[i+1]); seg.setAttribute('y2', y);
+    seg.setAttribute('stroke', 'var(--amber)');
+    seg.setAttribute('stroke-width', 4);
+    seg.setAttribute('stroke-linecap','round');
+    seg.classList.add('route-path');
+    mapSvg.appendChild(seg);
+  }
+
+  // station dots + labels
+  route.forEach((st, i) => {
+    const isEndpoint = i===0 || i===n-1;
+    const color = LINE_COLOR[STATION_LINE[st]] || 'var(--amber)';
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', xs[i]);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', isEndpoint ? 8 : 5.5);
+    circle.setAttribute('fill', isEndpoint ? 'var(--amber)' : 'var(--panel)');
+    circle.setAttribute('stroke', isEndpoint ? 'var(--panel)' : color);
+    circle.setAttribute('stroke-width', isEndpoint ? 3 : 2.5);
+    mapSvg.appendChild(circle);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x', xs[i]);
+    label.setAttribute('y', i % 2 === 0 ? y - 16 : y + 26);
+    label.setAttribute('text-anchor','middle');
+    label.setAttribute('class', 'station-label' + (isEndpoint ? ' endpoint' : ''));
+    label.textContent = st.replace(/_/g,' ');
+    mapSvg.appendChild(label);
+  });
+
+  mapSvg.setAttribute('viewBox', `0 0 ${width} ${Math.max(height, 100)}`);
+}
+
+function renderChain(route){
+  routeChain.innerHTML = '';
+  route.forEach((st, i) => {
+    if(i>0){
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '→';
+      routeChain.appendChild(arrow);
+    }
+    const chip = document.createElement('span');
+    chip.className = 'stop' + ((i===0 || i===route.length-1) ? ' endpoint' : '');
+    chip.textContent = st.replace(/_/g,' ');
+    routeChain.appendChild(chip);
+  });
+}
+
+findBtn.addEventListener('click', () => {
+  errorMsg.style.display = 'none';
+  const source = sourceSel.value;
+  const destination = destSel.value;
+
+  if(!source || !destination){
+    errorMsg.textContent = 'Pick both a source and destination station.';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  const { dist, parent } = dijkstra(source, mode);
+  const route = buildRoute(source, destination, parent);
+
+  if(!route){
+    errorMsg.textContent = 'No route found between these stations.';
+    errorMsg.style.display = 'block';
+    readout.style.display = 'none';
+    mapSvg.style.display = 'none';
+    mapEmpty.style.display = 'block';
+    routeListWrap.style.display = 'none';
+    return;
+  }
+
+  const total = dist[destination];
+  bigNumber.textContent = total.toLocaleString();
+  bigUnit.textContent = mode === 'distance' ? 'meters' : 'minutes';
+  hopsLabel.textContent = `${route.length} stations · ${route.length-1} hop${route.length-1===1?'':'s'}`;
+  readout.style.display = 'flex';
+
+  mapEmpty.style.display = 'none';
+  mapSvg.style.display = 'block';
+  renderMap(route);
+
+  routeListWrap.style.display = 'block';
+  renderChain(route);
+});
+
+// auto-run once on load with defaults
+findBtn.click();
+</script>
+</body>
+</html>
