@@ -1,14 +1,20 @@
-# 🚇 Optimal Route Finder — Metro-Network-Analysis (Hyderabad Metro)
+# 🚇 Optimal Route Finder — Hyderabad Metro
 
 A Dijkstra's-algorithm-based shortest path finder for the Hyderabad Metro network. Computes the minimum **distance** or **travel time** between any two stations across 56 stations on 3 interconnected lines, and reconstructs the full route.
 
 <p align="left">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
   <img src="https://img.shields.io/badge/Algorithm-Dijkstra-blueviolet?style=for-the-badge" alt="Dijkstra's Algorithm">
   <img src="https://img.shields.io/badge/Data%20Structure-Priority%20Queue-orange?style=for-the-badge" alt="Priority Queue">
   <img src="https://img.shields.io/badge/Stations-56-2FAE66?style=for-the-badge" alt="56 Stations">
+  <img src="https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo">
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License">
 </p>
+
+### 🔗 [**Live Demo →**](https://metro-network-analysis.vercel.app/)
+
+Try it right now — pick a source and destination station and see the shortest route rendered on a schematic metro map.
 
 ---
 
@@ -27,8 +33,16 @@ A Dijkstra's-algorithm-based shortest path finder for the Hyderabad Metro networ
 | <img src="https://img.icons8.com/color/48/python.png" width="28"/> **Language** | Python 3 (standard library only — `heapq`, `dataclasses`, `typing`) |
 | <img src="https://img.icons8.com/fluency/48/graph.png" width="28"/> **Algorithm** | Dijkstra's shortest path, generalized over distance/time weights |
 | <img src="https://img.icons8.com/fluency/48/data-configuration.png" width="28"/> **Data Structure** | Adjacency list graph + binary heap priority queue |
+| <img src="https://img.icons8.com/color/48/html-5--v1.png" width="28"/> **Frontend** | Vanilla HTML/CSS/JavaScript — no frameworks, runs entirely client-side |
+| <img src="https://img.icons8.com/color/48/vercel.png" width="28"/> **Deployment** | [Vercel](https://vercel.com) (static hosting) |
 
-## 🚀 Getting Started
+## 🌐 Web App
+
+A live, interactive version is deployed at **[metro-network-analysis.vercel.app](https://metro-network-analysis.vercel.app/)** — pick stations from dropdowns, toggle between shortest distance/time, and see the route rendered on a schematic transit map, color-coded by line.
+
+To run it locally instead, just open `index.html` in any browser — no server or build step needed.
+
+## 🚀 Getting Started (Python CLI)
 
 ### Prerequisites
 Just Python 3 — no external packages required.
